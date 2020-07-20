@@ -33,7 +33,7 @@ class CPU:
 
 
 
-        
+
         # For now, we've just hardcoded a program:
 
         # program = [
@@ -79,6 +79,14 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
         print()
+
+    def ram_read(self, counter):
+        return self.ram[counter]
+    
+
+
+    def ram_write(self, counter, value):
+        self.reg[counter] = value
 
     def run(self):
         """Run the CPU."""
