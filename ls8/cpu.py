@@ -7,24 +7,44 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
+        self.reg = [0] * 8
+        self.pc = 0
+        self.ram = [0] * 256
+
         pass
 
-    def load(self):
+    def load(self, file_name):
         """Load a program into memory."""
 
         address = 0
 
+        program = []
+        with open(file_name) as f:
+            lines = f.readlines()
+            for line in lines:
+                if line[0] != '#':
+                    num = int(line[0:8], 2)
+                    num1 = bin(num)
+                    binary = format(num, "08b")
+                    program.append(binary)
+
+        print(program)
+
+
+
+
+        
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
         for instruction in program:
             self.ram[address] = instruction
