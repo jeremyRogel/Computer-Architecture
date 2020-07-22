@@ -2,6 +2,7 @@
 
 import sys
 
+
 class CPU:
     """Main CPU class."""
 
@@ -10,8 +11,17 @@ class CPU:
         self.reg = [0] * 8
         self.pc = 0
         self.ram = [0] * 256
-
+        self.sp = 7
+        self.reg[self.sp] = 0xF4
         self.running = True
+        self.ir = {
+            0b10100010: 'MUL',
+            0b00000001: 'HLT',
+            0b10000010: 'LDI',
+            0b01000111: 'PRN',
+            0b01000101: 'PUSH',
+            0b01000110: 'POP'           
+        }
 
     def load(self, file_name):
         """Load a program into memory."""
@@ -53,22 +63,47 @@ class CPU:
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
+
+        value = op >> 6 
+        value = value + 0b00000001
+        # print('value', value)
+        op = self.ir[op]
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
         elif op == 'MUL':
             print(self.reg[reg_a] * self.reg[reg_b])
-            self.pc +=3
+            self.pc +=value
         elif op == 'LDI':
             self.ram_write(reg_a, reg_b)
-            self.pc +=3  #3
+            self.pc +=value  #3
         elif op == 'HLT':
             self.running = False
-            self.pc += 1
+            self.pc += value
             sys.exit(1)
         elif op == 'PRN':
             print(self.reg[reg_a])
-            self.pc += 2
+            self.pc += value
+        elif op == 'PUSH':
+
+            self.reg[self.sp] -= 1
+
+            reg_value = self.reg[reg_a]
+
+            stack_address = self.reg[self.sp]
+            self.ram[stack_address] = reg_value
+            self.pc += value
+        elif op == 'POP':
+
+            stack_address = self.reg[self.sp]
+
+            reg_value = self.ram_read(stack_address)
+            self.reg[self.sp] = self.reg[self.sp] + 1
+
+            self.reg[reg_a] = reg_value
+
+            self.pc += value
+
         else:
             raise Exception("Unsupported ALU operation")
         sys.exit(1)
@@ -103,50 +138,22 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        HLT = 0b00000001
-
-        # ir = {
-        #     'MUL':0b10100010,
-        #     'HLT':0b00000001,
-        #     'LDI':0b10000010,
-        #     'PRN':0b01000111
-        #     }
-        ir = {
-            0b10100010:'MUL',
-            0b00000001:'HLT',
-            0b10000010:'LDI',
-            0b01000111:'PRN'
-            }
-
-
-        
-         # 0b10000010
+       
         while self.running:
-            # ir = self.ram_read(pc)
-
-            #if ir == 0b10000010
-
-            #     self.ram_write(self.ram_read(pc+1), self.ram_read(pc+2))
-            #     print("LDI, pc, pc+1", ir, self.ram_read(pc+1), self.ram_read(pc+2)) 
-            #     pc +=3  #3
-            # elif ir == HLT:
-            #     running = False
 
 
-            #     pc = pc + 1
+            self.alu(self.ram_read(self.pc), self.ram_read(
+                self.pc+1), self.ram_read(self.pc+2))
 
-            #     sys.exit(1)
-            # elif ir == 0b01000111:
-            #     print(self.ram_read(pc+1))
+            # PUSH
+# PUSH register
 
-            #     pc = pc + 2
-            # elif ir == 0b10100010:
-            #     print(self.ram_read(pc), self.ram_read(pc+1), self.ram_read(pc+2))
+# # Push the value in the given register on the stack.
 
-            #     self.alu(self.ram_read(pc), self.ram_read(pc+1), self.ram_read(pc+2))
+# # Decrement the SP.
+# # Copy the value in the given register to the address pointed to by SP.
+# # Machine code:
 
-            # else:
-            #     print(f'Unknown instruction {ir} at address {pc}')
-            #     sys.exit(1)
+# # 01000101 00000rrr
+# 45 0r
 
-            self.alu(ir[self.ram_read(self.pc)], self.ram_read(self.pc+1), self.ram_read(self.pc+2))
