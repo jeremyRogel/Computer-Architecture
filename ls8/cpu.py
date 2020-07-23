@@ -9,10 +9,11 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
         self.reg = [0] * 8
-        self.pc = 0
+        self.pc = 0 # counter index
         self.ram = [0] * 256
         self.sp = 7
         self.reg[self.sp] = 0xF4
+        self.flag = 0b00000000
         self.running = True
         self.ir = {
             0b10100010: 'MUL',
@@ -20,7 +21,14 @@ class CPU:
             0b10000010: 'LDI',
             0b01000111: 'PRN',
             0b01000101: 'PUSH',
-            0b01000110: 'POP'           
+            0b01000110: 'POP',
+            0b01010000: 'CALL',
+            0b00010001: 'RET',
+            0b10100000: 'ADD',
+            0b10100111: 'CMP',
+            0b01010100: 'JMP',
+            0b01010101: 'JEQ',
+            0b01010110: 'JNE'          
         }
 
     def load(self, file_name):
@@ -30,7 +38,7 @@ class CPU:
 
         program = []
         with open(file_name) as f:
-
+            i = 0
             for address, line in enumerate(f):
                 line = line.split("#")
                 try:
@@ -38,7 +46,8 @@ class CPU:
 
                 except ValueError:
                     continue
-                self.ram[address] = v
+                self.ram[i] = v
+                i = i + 1
 
 
 
@@ -60,6 +69,8 @@ class CPU:
         #     address += 1
 
 
+    # reg_a -> instruction, 'CALL, PUSH, LDI etc
+    # reg_b --> address to R1 ( in case of a call)
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
@@ -70,6 +81,7 @@ class CPU:
         op = self.ir[op]
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+            self.pc += value
         #elif op == "SUB": etc
         elif op == 'MUL':
             print(self.reg[reg_a] * self.reg[reg_b])
@@ -95,7 +107,7 @@ class CPU:
             self.pc += value
         elif op == 'POP':
 
-            stack_address = self.reg[self.sp]
+            stack_address = self.reg[self.sp] #243
 
             reg_value = self.ram_read(stack_address)
             self.reg[self.sp] = self.reg[self.sp] + 1
@@ -103,6 +115,61 @@ class CPU:
             self.reg[reg_a] = reg_value
 
             self.pc += value
+
+        elif op == 'CALL':
+
+            return_address = self.pc + value
+
+            self.reg[self.sp] -= 1 
+            memory_address = self.reg[self.sp]
+            self.ram[memory_address] = return_address
+            sub_routine_address = self.reg[reg_a]
+            self.pc = sub_routine_address 
+
+
+        elif op == 'RET':
+            stack_address = self.reg[self.sp]
+
+            reg_value = self.ram[stack_address] # return address
+
+            self.reg[self.sp] = self.reg[self.sp] + 1
+            self.pc = reg_value 
+
+        elif op == 'CMP':
+
+            if self.reg[reg_a] < self.reg[reg_b]:
+
+                self.flag = 0b00000100
+                self.pc += value
+
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b00000010
+                self.pc += value
+
+            else:
+                self.flag = 0b00000001
+                self.pc += value
+
+        elif op == 'JMP':
+            self.pc = self.reg[reg_a]
+        elif op == 'JEQ':
+
+            if self.flag == 0b00000001:
+                self.pc = self.reg[reg_a]
+            else:
+                self.pc += value
+
+        elif op == 'JNE':
+
+            if self.flag == 0b00000100:
+                self.pc = self.reg[reg_a]
+            elif self.flag == 0b00000010:
+                self.pc = self.reg[reg_a]
+            else:
+                self.pc += value
+
+
+
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -142,8 +209,15 @@ class CPU:
         while self.running:
 
 
-            self.alu(self.ram_read(self.pc), self.ram_read(
-                self.pc+1), self.ram_read(self.pc+2))
+            self.alu(self.ram_read(self.pc), self.ram_read(self.pc+1), self.ram_read(self.pc+2))
+
+# [10,20,0,0,0,0]
+
+#[0,0,0,......255]
+
+# 10000010 # LDI R0,10
+# 00000000
+# 00001010
 
             # PUSH
 # PUSH register
