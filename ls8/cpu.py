@@ -54,19 +54,19 @@ class CPU:
 
         # For now, we've just hardcoded a program:
 
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
+        program = [
+            # From print8.ls8
+            0b10000010, # LDI R0,8
+            0b00000000,
+            0b00001000,
+            0b01000111, # PRN R0
+            0b00000000,
+            0b00000001, # HLT
+        ]
 
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
+        for instruction in program:
+            self.ram[address] = instruction
+            address += 1
 
 
     # reg_a -> instruction, 'CALL, PUSH, LDI etc
@@ -135,6 +135,8 @@ class CPU:
             self.reg[self.sp] = self.reg[self.sp] + 1
             self.pc = reg_value 
 
+        #instructions below are added for Spring challenge (CMP, JMP, JEQ, and JNE instructions)
+
         elif op == 'CMP':
 
             if self.reg[reg_a] < self.reg[reg_b]:
@@ -167,8 +169,6 @@ class CPU:
                 self.pc = self.reg[reg_a]
             else:
                 self.pc += value
-
-
 
 
         else:
@@ -213,13 +213,13 @@ class CPU:
 
 # [10,20,0,0,0,0]
 
-#[0,0,0,......255]
+# [0,0,0,......255]
 
 # 10000010 # LDI R0,10
 # 00000000
 # 00001010
 
-            # PUSH
+#             PUSH
 # PUSH register
 
 # # Push the value in the given register on the stack.
